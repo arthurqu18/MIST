@@ -85,6 +85,7 @@ async def info_quad(
     lista_features: List[str] = Query(...),
     window_size: int = Query(3, ge=1),
     test_window_size: int = Query(1, ge=1),
+    n_split: int = Query(10, ge=1),
 ):
     """
     Informações dos quadrantes por feature
@@ -99,7 +100,7 @@ async def info_quad(
     else:
         df = pd.read_csv(file.file)
     
-    runner = ExperimentRunner()
+    runner = ExperimentRunner(n_splits=n_split)
     results = runner.runners(
         df=df,
         lista_features=lista_features,

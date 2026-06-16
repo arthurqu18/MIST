@@ -257,11 +257,15 @@
         <p style="margin-bottom: 10px; font-size: 0.9rem;">Escolha as features para análise visual:</p>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 15px;">
           <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
-            Train window size
+            Number splits
+            <input id="input_n_splits" type="number" min="1" value="10" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
+            Train window size (in folds)
             <input id="input_window_size" type="number" min="1" value="3" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
           </label>
           <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
-            Test window size
+            Test window size (in folds)
             <input id="input_test_window_size" type="number" min="1" value="1" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
           </label>
         </div>
@@ -433,8 +437,12 @@
       const selected = Array.from(document.querySelectorAll('#checkbox_quadrantes input:checked')).map(i => i.value);
       if (selected.length === 0) return alert("Selecione ao menos uma feature.");
 
+      const n_Splits = Number(document.getElementById('input_n_splits').value)
       const windowSize = Number(document.getElementById('input_window_size').value);
       const testWindowSize = Number(document.getElementById('input_test_window_size').value);
+      if (!Number.isInteger(n_Splits) || n_Splits < 1) {
+        return alert("Informe um numero de split válido (>= 1).");
+      }
       if (!Number.isInteger(windowSize) || windowSize < 1) {
         return alert("Informe um train window size válido (>= 1).");
       }
@@ -452,6 +460,7 @@
       formData.append('file', uploadedFile);
       const params = new URLSearchParams();
       selected.forEach(s => params.append('lista_features', s));
+      params.append('n_splits', String(n_Splits));
       params.append('window_size', String(windowSize));
       params.append('test_window_size', String(testWindowSize));
 
