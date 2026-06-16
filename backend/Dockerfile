@@ -19,11 +19,6 @@ ARG TABPFN_TOKEN=""
 COPY requirements.txt .
 RUN pip3 install --user --no-cache-dir -r requirements.txt
 
-# Faz login no HuggingFace se HF_TOKEN for fornecido
-RUN if [ -n "$HF_TOKEN" ]; then \
-    python3 -c "from huggingface_hub import login; login(token='$HF_TOKEN', add_to_git_credential=False)"; \
-    fi
-
 # Runtime stage
 FROM nvidia/cuda:12.1.0-runtime-ubuntu22.04
 

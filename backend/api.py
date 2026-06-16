@@ -83,6 +83,8 @@ def _fig_to_base64(fig) -> str:
 async def info_quad(
     file: UploadFile = File(...),
     lista_features: List[str] = Query(...),
+    window_size: int = Query(3, ge=1),
+    test_window_size: int = Query(1, ge=1),
 ):
     """
     Informações dos quadrantes por feature
@@ -98,7 +100,12 @@ async def info_quad(
         df = pd.read_csv(file.file)
     
     runner = ExperimentRunner()
-    results = runner.runners(df=df, lista_features=lista_features)
+    results = runner.runners(
+        df=df,
+        lista_features=lista_features,
+        window_size=window_size,
+        test_window_size=test_window_size,
+    )
 
     payload = []
     for item in results:

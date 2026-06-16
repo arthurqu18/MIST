@@ -255,6 +255,17 @@
       <div class="card" id="card4">
         <h2>📐 Seleção para Quadrantes</h2>
         <p style="margin-bottom: 10px; font-size: 0.9rem;">Escolha as features para análise visual:</p>
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 15px;">
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
+            Train window size
+            <input id="input_window_size" type="number" min="1" value="3" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+          </label>
+          <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
+            Test window size
+            <input id="input_test_window_size" type="number" min="1" value="1" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
+          </label>
+        </div>
+        <p style="margin-bottom: 10px; font-size: 0.8rem; color: #666;">Esses valores controlam a janela deslizante usada no cálculo dos quadrantes.</p>
         <div id="checkbox_quadrantes" class="checkbox-group">
           <p class="placeholder">Carregue um arquivo primeiro.</p>
         </div>
@@ -421,6 +432,15 @@
     document.getElementById('btn_selecao_quadrantes').addEventListener('click', async function() {
       const selected = Array.from(document.querySelectorAll('#checkbox_quadrantes input:checked')).map(i => i.value);
       if (selected.length === 0) return alert("Selecione ao menos uma feature.");
+
+      const windowSize = Number(document.getElementById('input_window_size').value);
+      const testWindowSize = Number(document.getElementById('input_test_window_size').value);
+      if (!Number.isInteger(windowSize) || windowSize < 1) {
+        return alert("Informe um train window size válido (>= 1).");
+      }
+      if (!Number.isInteger(testWindowSize) || testWindowSize < 1) {
+        return alert("Informe um test window size válido (>= 1).");
+      }
       
       showNotification('O TabPFN utiliza o CUDA da Nvidia para um melhor processamento dos dados, caso não tenha Nvidia, ele utilizara a CPU do seu computador. TabPFN é utilizado na `Seleção de Quadrantes` e pode ser escolhido como o algoritmo que irá imputar os dados na seção `Imputação de Dados`', 'info', 15000);
 
@@ -432,6 +452,8 @@
       formData.append('file', uploadedFile);
       const params = new URLSearchParams();
       selected.forEach(s => params.append('lista_features', s));
+      params.append('window_size', String(windowSize));
+      params.append('test_window_size', String(testWindowSize));
 
       try {
         const res = await fetch(`http://localhost:8000/info_quadrantes?${params.toString()}`, { method: 'POST', body: formData });

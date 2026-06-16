@@ -13,13 +13,16 @@ class missforest:
         self._model = IterativeImputer(estimator=ExtraTreesRegressor(n_estimators=10, random_state=7), 
                                max_iter=20, random_state=7)
         self.feature = feature
+        self.columns_ = None
     
     def fit(self, df_train):
-        self._model.fit(df_train)
+        self.columns_ = [column for column in df_train.columns if not df_train[column].isna().all()]
+        self._model.fit(df_train[self.columns_])
     
     def transform(self, df_test) -> pd.DataFrame:
         df_imputed = df_test.copy()
-        df_imputed[:] = self._model.transform(df_test)
+        transformed = self._model.transform(df_test[self.columns_])
+        df_imputed[self.columns_] = transformed
         return pd.DataFrame(df_imputed, columns=df_test.columns, index=df_test.index)
 
 class KNN:
@@ -27,26 +30,32 @@ class KNN:
         self.n_neighbors = n_neighbors
         self.feature = feature
         self._model = KNNImputer(n_neighbors=n_neighbors)
+        self.columns_ = None
     
     def fit(self, df_train):
-        self._model.fit(df_train)
+        self.columns_ = [column for column in df_train.columns if not df_train[column].isna().all()]
+        self._model.fit(df_train[self.columns_])
 
     def transform(self, df_test) -> pd.DataFrame:
         df_imputed = df_test.copy()
-        df_imputed = self._model.transform(df_test)
+        transformed = self._model.transform(df_test[self.columns_])
+        df_imputed[self.columns_] = transformed
         return pd.DataFrame(df_imputed, columns=df_test.columns, index=df_test.index)
 
 class MICE:
     def __init__(self, max_iter: int = 20, random_state: int = 7, feature=None):
         self._model = IterativeImputer(estimator=BayesianRidge(), max_iter=20, random_state=7)
         self.feature = feature
+        self.columns_ = None
 
     def fit(self, df_train):
-        self._model.fit(df_train)
+        self.columns_ = [column for column in df_train.columns if not df_train[column].isna().all()]
+        self._model.fit(df_train[self.columns_])
 
     def transform(self, df_test) -> pd.DataFrame:
         df_imputed = df_test.copy()
-        df_imputed = self._model.transform(df_test)
+        transformed = self._model.transform(df_test[self.columns_])
+        df_imputed[self.columns_] = transformed
         return pd.DataFrame(df_imputed, columns=df_test.columns, index=df_test.index)
     
 class Mean:
@@ -91,14 +100,16 @@ class tabpfn_imputer:
         # TabPFNRegressor com suporte a datasets grandes em CPU
         self._model = TabPFNRegressor(device=device, ignore_pretraining_limits=True)
         self.feature = feature
+        self.x_columns_ = None
     
     def fit(self, df_train):
         X_train = df_train.drop(columns=[self.feature])
+        self.x_columns_ = [column for column in X_train.columns if not X_train[column].isna().all()]
         y_train = df_train[self.feature]
-        self._model.fit(X_train.values, y_train.values)
+        self._model.fit(X_train[self.x_columns_].values, y_train.values)
     
     def transform(self, df_test) -> pd.DataFrame:
         df_imputed = df_test.copy()    
-        preds = self._model.predict(df_test.drop(columns=[self.feature]).values)
+        preds = self._model.predict(df_test.drop(columns=[self.feature])[self.x_columns_].values)
         df_imputed[self.feature] = preds
         return pd.DataFrame(df_imputed, columns=df_test.columns, index=df_test.index)

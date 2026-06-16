@@ -37,9 +37,13 @@ class ExperimentRunner:
         mse = mean_squared_error(df_subset[column], df_imputed[column])
         return mae, mse
 
-    def run(self, df: pd.DataFrame, feature):      
+    def run(self, df: pd.DataFrame, feature, window_size: int = 3, test_window_size: int = 1):      
         if feature not in df.columns:
             raise ValueError(f"Feature '{feature}' não encontrada no dataframe passado")
+        if window_size < 1:
+            raise ValueError("window_size precisa ser maior ou igual a 1")
+        if test_window_size < 1:
+            raise ValueError("test_window_size precisa ser maior ou igual a 1")
         
         self.feature = feature
 
@@ -54,13 +58,29 @@ class ExperimentRunner:
         df_nans = df_mcar.loc[idx_missing]
         df_controle = df.loc[idx_missing]
 
-        kf = KFold(n_splits=self.n_splits, shuffle=True, random_state=self.random_state)
         
         imputadores = {'média': Mean,'knn': KNN,'mice': MICE, 'tabpfn': tabpfn_imputer, 'missforest': missforest}
         dfs = {nome: [] for nome in imputadores.keys()}
         metricas = []
 
-        for i, (train_idx, test_idx) in enumerate(kf.split(df_nans)):
+        if self.n_splits < window_size + test_window_size:
+            raise ValueError(
+                "n_splits precisa ser maior ou igual à soma de window_size e test_window_size"
+            )
+
+        # Cada fold é um bloco ordenado de linhas; a janela anda sobre esses blocos.
+        fold_indices = [test_idx for _, test_idx in KFold(n_splits=self.n_splits, shuffle=False).split(df_nans)]
+        rolling_steps = range(0, len(fold_indices) - window_size - test_window_size + 1, test_window_size)
+
+        for window_start in rolling_steps:
+            train_fold_indices = fold_indices[window_start: window_start + window_size]
+            test_fold_indices = fold_indices[
+                window_start + window_size: window_start + window_size + test_window_size
+            ]
+
+            train_idx = np.concatenate(train_fold_indices)
+            test_idx = np.concatenate(test_fold_indices)
+
             df_train = df_controle.iloc[train_idx]
             df_test = df_nans.iloc[test_idx]
 
@@ -77,7 +97,6 @@ class ExperimentRunner:
                 tempo = time.time() - start_time
                 mae, mse = self.calculate_errors(df_controle, df_imputed, self.feature)
                 metricas.append({
-                    'fold': i,
                     'metodo': nome,
                     'mae': mae,
                     'mse': mse,
@@ -88,8 +107,8 @@ class ExperimentRunner:
                 dfs[nome].append(df_imputed[[self.feature]])
 
         
-        #df_metricas = pd.DataFrame(metricas)
-        #print(df_metricas.groupby('metodo')[['mae', 'mse', 'tempo_segundos']].mean())
+        df_metricas = pd.DataFrame(metricas)
+        print(df_metricas.groupby('metodo')[['mae', 'mse', 'tempo_segundos']].mean())
 
         for nome in dfs.keys():
             dfs[nome] = pd.concat(dfs[nome], axis=0)
@@ -99,7 +118,9 @@ class ExperimentRunner:
 
         df_controle_copy = df_controle.copy()
         imputador = KNNImputer(n_neighbors=10)
-        df_notNan = pd.DataFrame(imputador.fit_transform(df_controle_copy), columns=df_controle_copy.columns, index=df_controle_copy.index)
+        colunas_validas = [column for column in df_controle_copy.columns if not df_controle_copy[column].isna().all()]
+        df_notNan = df_controle_copy.copy()
+        df_notNan[colunas_validas] = imputador.fit_transform(df_controle_copy[colunas_validas])
 
         # normalização mantendo DataFrame
         scaler = MinMaxScaler()
@@ -187,10 +208,15 @@ class ExperimentRunner:
         }
             
     # executa `run` varias vezes --> para gerar imagens quadrantes
-    def runners(self, df: pd.DataFrame, lista_features):
+    def runners(self, df: pd.DataFrame, lista_features, window_size: int = 3, test_window_size: int = 1):
         results = []
         for feature in lista_features:
-            result = self.run(df=df, feature=feature)
+            result = self.run(
+                df=df,
+                feature=feature,
+                window_size=window_size,
+                test_window_size=test_window_size,
+            )
             results.append({
                 "feature": feature,
                 "erro_medio": result["erro_medio"],
