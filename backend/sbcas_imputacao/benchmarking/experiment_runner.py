@@ -186,21 +186,27 @@ class ExperimentRunner:
         ax.axvline(media_x, color="red", linestyle="--", linewidth=1.5, label=f"X = {media_x:.2f}")
         ax.axhline(media_y, color="blue", linestyle="--", linewidth=1.5, label=f"Y = {media_y:.2f}")
 
-        quadrantes_posicoes = {
-            "Esquerda Inferior": (media_x * 0.2, media_y * 1.5),
-            "Esquerda Superior": (media_x * 0.2, media_y * 0.75),
-            "Direita Inferior": (media_x * 1.5, media_y * 1.5),
-            "Direita Superior": (media_x * 1.5, media_y * 0.75)
-        }
+        quadrantes = ["Esquerda Inferior", "Esquerda Superior", "Direita Inferior", "Direita Superior"]
+        metrics_text = f"Erro por Quadrante:\n"
 
-        for quad, pos in quadrantes_posicoes.items():
-            ax.text(
-                pos[0],
-                pos[1],
-                f"Erro {quad}: {erro_medio['Erro Absoluto knn'].get(quad, 0):.2f}",
-                fontsize=9,
-                bbox=dict(facecolor="white", alpha=0.7),
+        for quad in quadrantes:
+            metrics_text += f"• {quad}: {erro_medio['Erro Absoluto knn'].get(quad, 0):.2f}\n"
+        
+        ax.text(
+            1.05, 0.95,               # Coordinates: slightly right of the plot (x=1.05), near the top (y=0.95)
+            metrics_text.strip(), 
+            transform=ax.transAxes,   # Tells matplotlib to use relative sizing instead of data values
+            fontsize=11, 
+            verticalalignment='top',  # Aligns the top of the text block to your y coordinate
+            fontfamily='monospace',   # Monospace keeps numbers perfectly aligned vertically
+            bbox=dict(                # Adds a beautiful background box around your text block
+            boxstyle="round,pad=0.5", 
+            facecolor="#f9f9f9", 
+            edgecolor="gray", 
+            alpha=0.9
             )
+        )        
+                
 
         return {
             "erro_medio": erro_medio,
