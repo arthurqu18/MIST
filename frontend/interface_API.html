@@ -237,7 +237,7 @@
         <div class="upload-area" id="uploadArea">
           <input type="file" id="input_file" accept=".csv,.xlsx,.xls,.parquet" hidden>
           <div class="upload-content">
-            <p>Clique ou arraste seu arquivo aqui (.csv, .xlsx, .parquet)</p>
+            <p>Clique ou arraste seu arquivo aqui (.csv ou .parquet)</p>
             <span id="fileName" style="font-weight:bold; color:#667eea;"></span>
           </div>
         </div>
@@ -254,10 +254,10 @@
 
       <div class="card" id="card4">
         <h2>📐 Seleção para Quadrantes</h2>
-        <p style="margin-bottom: 10px; font-size: 0.9rem;">Escolha as features para análise visual:</p>
+        <p style="margin-bottom: 10px; font-size: 0.9rem;">Configurações de treinamento/teste e escolha das features:</p>
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 15px;">
           <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
-            Number splits
+            <span>Quantidade de Folds (dataset contém <span id="datasetRowsCount">0</span> linhas)</span>
             <input id="input_n_splits" type="number" min="1" value="10" style="padding:10px; border-radius:8px; border:1px solid #ddd;">
           </label>
           <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
@@ -379,6 +379,7 @@
       const cols = data.shape.cols;
 
       infoGeral.textContent = `Dataset: ${rows} linhas e ${cols} colunas.`;
+      document.getElementById('datasetRowsCount').textContent = rows;
 
       // Pega as chaves de estatísticas (mean, std, etc)
       const statsKeys = Object.keys(data.describe[features[0]]);
@@ -519,7 +520,11 @@
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${uploadedFile.name.replace(/\.[^.]+$/, '')}_imputado_${metodo}.csv`;
+        const contentDisposition = res.headers.get('content-disposition') || '';
+        const match = contentDisposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+        const serverFilename = match ? decodeURIComponent(match[1] || match[2]) : '';
+        const fallbackExtension = uploadedFile.name.includes('.') ? uploadedFile.name.split('.').pop() : 'csv';
+        a.download = serverFilename || `${uploadedFile.name.replace(/\.[^.]+$/, '')}_imputado_${metodo}.${fallbackExtension}`;
         a.click();
       } catch (err) {
         alert("Erro na imputação.");
