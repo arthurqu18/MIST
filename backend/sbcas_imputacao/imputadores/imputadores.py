@@ -65,6 +65,13 @@ class Mean:
         mean = df_train[feature].mean()
         df_imputed[feature] = df_test[feature].fillna(mean)
         return pd.DataFrame(df_imputed, columns=df_test.columns, index=df_test.index)
+
+class Zero:
+    @staticmethod
+    def fit_transform(df_train, df_test, feature) -> pd.DataFrame:
+        df_imputed = df_test.copy()
+        df_imputed[feature] = df_test[feature].fillna(value=0)
+        return pd.DataFrame(df_imputed, columns=df_test.columns, index=df_test.index)
     
 class tabpfn_imputer:
     def __init__(self, feature):

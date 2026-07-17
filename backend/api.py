@@ -29,18 +29,10 @@ async def describe_df(file: UploadFile = File(...)):
     Shape e describe do dataframe passado
     """
 
-    # if not file.filename.endswith(".parquet"):
-    #     raise HTTPException(status_code=400, detail="Só .parquet são aceitos")
-
     if file.filename.endswith('.parquet'):
         df = pd.read_parquet(file.file)
     else:
         df = pd.read_csv(file.file)
-
-    #try:
-    #    df = pd.read_parquet(file.file)
-    #except Exception as e:
-    #    raise HTTPException(status_code=400, detail=f"Falha ao ler arquivo: {e}")
 
     runner = ExperimentRunner()
     result = runner.describe(df)
@@ -62,11 +54,6 @@ async def colunas_nans(file: UploadFile = File(...)):
     else:
         df = pd.read_csv(file.file)
 
-    #try:
-    #    df = pd.read_parquet(file.file)
-    #except Exception as e:
-    #    raise HTTPException(status_code=400, detail=f"falha ao ler df: {e}")
-
     runner = ExperimentRunner()
     result = runner.NaNs_each_column(df=df)
     return {col: int(count) for col, count in result.items()}
@@ -87,13 +74,6 @@ async def info_quad(
     test_window_size: int = Query(1, ge=1),
     n_split: int = Query(10, ge=1),
 ):
-    """
-    Informações dos quadrantes por feature
-    """
-    #try:
-    #    df = pd.read_parquet(file.file)
-    #except Exception as e:
-    #    raise HTTPException(status_code=400, detail=f"falha ao ler df: {e}")
 
     if file.filename.endswith('.parquet'):
         df = pd.read_parquet(file.file)
@@ -131,7 +111,6 @@ async def imputar_dados(
     """
     Imputar dados faltantes das features selecionadas
     """
-
     caminho_entrada = f"temp_{arquivo.filename}"
     with open(caminho_entrada, "wb") as f:
         f.write(await arquivo.read())

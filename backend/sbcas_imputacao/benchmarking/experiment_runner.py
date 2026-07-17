@@ -1,6 +1,6 @@
 from pygrinder import mcar
 from sklearn.model_selection import KFold
-from ..imputadores import tabpfn_imputer, KNN, Mean, missforest, MICE
+from ..imputadores import tabpfn_imputer, KNN, Mean, missforest, MICE, Zero
 import time
 from sklearn.metrics import mean_absolute_error, mean_squared_error
 import pandas as pd
@@ -240,6 +240,8 @@ class ExperimentRunner:
         match algoritmo:
             case "média": 
                 df_imputed = Mean.fit_transform(df_train=df_train.copy(), df_test=df_test.copy(), feature=feature)
+            case "zero":
+                df_imputed = Zero.fit_transform(df_train=df_train.copy(), df_test=df_test.copy(), feature=feature)
             case "knn":
                 imputer = KNN(feature=feature)
                 imputer.fit(df_train.copy())

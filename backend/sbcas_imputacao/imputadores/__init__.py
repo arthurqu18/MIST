@@ -1,4 +1,4 @@
-from .imputadores import KNN, MICE, Mean, missforest, tabpfn_imputer
+from .imputadores import KNN, MICE, Mean, missforest, tabpfn_imputer, Zero
 
 __all__ = [
 	"KNN",
@@ -6,4 +6,5 @@ __all__ = [
 	"Mean",
 	"missforest",
 	"tabpfn_imputer",
+    "Zero",
 ]
