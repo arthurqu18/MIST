@@ -2,29 +2,15 @@ version: "3.9"
 
 services:
   backend:
-    build:
-      context: ./backend
-      args:
-        HF_TOKEN: ${HF_TOKEN:-}
+    build: ./backend
     container_name: backend
     ports:
       - "8000:8000"
     env_file:
       - .env
     environment:
-      - HF_TOKEN=${HF_TOKEN:-}
-      - HUGGINGFACE_HUB_TOKEN=${HUGGINGFACE_HUB_TOKEN:-}
+      - PRIORLABS_API_KEY=${PRIORLABS_API_KEY:-}
       - TABPFN_TOKEN=${TABPFN_TOKEN:-}
-      - TABPFN_ALLOW_CPU_LARGE_DATASET=1
-      - CUDA_VISIBLE_DEVICES=0
-    runtime: nvidia
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
 
   frontend:
     build: ./frontend

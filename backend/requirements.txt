@@ -12,9 +12,8 @@ pyarrow>=14.0.0
 scikit-learn>=1.3.0
 scipy>=1.10.0
 
-# Imputação com TabPFN
-tabpfn>=2.0.0
-huggingface-hub>=0.16.0
+# TabPFN remoto via Prior Labs API
+tabpfn-client
 
 # Geração de Missing Data
 pygrinder>=0.6
