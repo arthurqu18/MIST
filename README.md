@@ -41,7 +41,7 @@ docker compose up -d --build
 
 Após o build e execução:
 
-- Acesse `localhost:3000`
+- Acesse `localhost:3000` para utilizar a ferramenta
 - Para parar a aplicação:
 
 ```bash
