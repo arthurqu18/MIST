@@ -21,3 +21,5 @@ pygrinder>=0.6
 # Visualização
 matplotlib>=3.7.0
 seaborn>=0.12.0
+
+python-dotenv

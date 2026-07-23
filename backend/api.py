@@ -73,12 +73,20 @@ async def info_quad(
     window_size: int = Query(3, ge=1),
     test_window_size: int = Query(1, ge=1),
     n_split: int = Query(10, ge=1),
+    usar_tabpfn: bool = Query(True),
+    priorlabs_api_key: str | None = Query(None),
 ):
 
     if file.filename.endswith('.parquet'):
         df = pd.read_parquet(file.file)
     else:
         df = pd.read_csv(file.file)
+
+    if usar_tabpfn and not priorlabs_api_key:
+        raise HTTPException(
+            status_code=400,
+            detail="TabPFN ativado mas sem a API key.",
+        )
     
     runner = ExperimentRunner(n_splits=n_split)
     results = runner.runners(
@@ -86,6 +94,8 @@ async def info_quad(
         lista_features=lista_features,
         window_size=window_size,
         test_window_size=test_window_size,
+        usar_tabpfn=usar_tabpfn,
+        tabpfn_api_key=priorlabs_api_key,
     )
 
     payload = []
@@ -105,7 +115,9 @@ async def imputar_dados(
     arquivo: UploadFile = File(...),
     metodo: str = Form("mice"),
     features_a_imputar: str = Form("features_a_imputar"), 
-    ignorar: str = Form(None)
+    ignorar: str = Form(None),
+    usar_tabpfn: bool = Form(True),
+    priorlabs_api_key: str | None = Form(None),
 ):
     
     """
@@ -140,7 +152,24 @@ async def imputar_dados(
     
     for col in colunas_alvo:
         if col in df_imputed.columns and df_imputed[col].isna().any():
-            df_imputed = runner.imputar(df=df_imputed, algoritmo=metodo, feature=col)
+            if metodo == "tabpfn" and not usar_tabpfn:
+                raise HTTPException(
+                    status_code=400,
+                    detail="TabPFN foi desativado para esta execução. Ative a opção para usá-lo ou escolha outro método.",
+                )
+            
+            if usar_tabpfn and not priorlabs_api_key:
+                raise HTTPException(
+                    status_code=400,
+                    detail="TabPFN ativado mas sem a API key",
+                )
+            
+            df_imputed = runner.imputar(
+                df=df_imputed,
+                algoritmo=metodo,
+                feature=col,
+                tabpfn_api_key=priorlabs_api_key,
+            )
 
     for col, valores in colunas_ignoradas.items():
         df_imputed[col] = valores

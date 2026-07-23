@@ -37,7 +37,15 @@ class ExperimentRunner:
         mse = mean_squared_error(df_subset[column], df_imputed[column])
         return mae, mse
 
-    def run(self, df: pd.DataFrame, feature, window_size: int = 3, test_window_size: int = 1):      
+    def run(
+        self,
+        df: pd.DataFrame,
+        feature,
+        window_size: int = 3,
+        test_window_size: int = 1,
+        usar_tabpfn: bool = True,
+        tabpfn_api_key: str | None = None,
+    ):      
         if feature not in df.columns:
             raise ValueError(f"Feature '{feature}' não encontrada no dataframe passado")
         if window_size < 1:
@@ -59,7 +67,9 @@ class ExperimentRunner:
         df_controle = df.loc[idx_missing]
 
         
-        imputadores = {'média': Mean,'knn': KNN,'mice': MICE, 'tabpfn': tabpfn_imputer, 'missforest': missforest}
+        imputadores = {'média': Mean,'knn': KNN,'mice': MICE, 'missforest': missforest}
+        if usar_tabpfn:
+            imputadores['tabpfn'] = tabpfn_imputer
         dfs = {nome: [] for nome in imputadores.keys()}
         metricas = []
 
@@ -88,7 +98,10 @@ class ExperimentRunner:
                 start_time = time.time()
 
                 if(nome != "média"):
-                    imputer = func(feature=self.feature)
+                    if nome == "tabpfn":
+                        imputer = func(feature=self.feature, api_key=tabpfn_api_key)
+                    else:
+                        imputer = func(feature=self.feature)
                     imputer.fit(df_train.copy())
                     df_imputed = imputer.transform(df_test.copy())
                 else:
@@ -119,14 +132,19 @@ class ExperimentRunner:
         df_controle_copy = df_controle.copy()
         imputador = KNNImputer(n_neighbors=10)
         colunas_validas = [column for column in df_controle_copy.columns if not df_controle_copy[column].isna().all()]
-        df_notNan = df_controle_copy.copy()
+        if not colunas_validas:
+            raise ValueError(
+                "Não há colunas com valores observados suficientes para calcular distância e entropia."
+            )
+
+        df_notNan = df_controle_copy[colunas_validas].copy()
         df_notNan[colunas_validas] = imputador.fit_transform(df_controle_copy[colunas_validas])
 
         # normalização mantendo DataFrame
         scaler = MinMaxScaler()
         df_select = pd.DataFrame(
             scaler.fit_transform(df_notNan),
-            columns=df_controle_copy.columns,
+            columns=colunas_validas,
             index=df_controle_copy.index
         )
 
@@ -167,7 +185,10 @@ class ExperimentRunner:
         results_final["quadrante"] = np.where(results_final["Distancia Media"] >= media_x, "Direita", "Esquerda")
         results_final["quadrante"] += np.where(results_final["Entropia"] >= media_y, " Superior", " Inferior")
 
-        erro_medio = results_final.groupby("quadrante")[["Erro Absoluto média", "Erro Absoluto knn","Erro Absoluto mice","Erro Absoluto missforest", "Erro Absoluto tabpfn"]].mean()
+        lista_erros = ["Erro Absoluto média", "Erro Absoluto knn","Erro Absoluto mice","Erro Absoluto missforest"]
+        if usar_tabpfn: lista_erros.append("Erro Absoluto tabpfn")
+
+        erro_medio = results_final.groupby("quadrante")[lista_erros].mean()
         erro_medio = erro_medio.round(2)
         print(erro_medio)
 
@@ -193,13 +214,13 @@ class ExperimentRunner:
             metrics_text += f"• {quad}: {erro_medio['Erro Absoluto knn'].get(quad, 0):.2f}\n"
         
         ax.text(
-            1.05, 0.95,               # Coordinates: slightly right of the plot (x=1.05), near the top (y=0.95)
+            1.05, 0.95,               
             metrics_text.strip(), 
-            transform=ax.transAxes,   # Tells matplotlib to use relative sizing instead of data values
+            transform=ax.transAxes,   
             fontsize=11, 
-            verticalalignment='top',  # Aligns the top of the text block to your y coordinate
-            fontfamily='monospace',   # Monospace keeps numbers perfectly aligned vertically
-            bbox=dict(                # Adds a beautiful background box around your text block
+            verticalalignment='top',  
+            fontfamily='monospace',   
+            bbox=dict(                
             boxstyle="round,pad=0.5", 
             facecolor="#f9f9f9", 
             edgecolor="gray", 
@@ -214,7 +235,15 @@ class ExperimentRunner:
         }
             
     # executa `run` varias vezes --> para gerar imagens quadrantes
-    def runners(self, df: pd.DataFrame, lista_features, window_size: int = 3, test_window_size: int = 1):
+    def runners(
+        self,
+        df: pd.DataFrame,
+        lista_features,
+        window_size: int = 3,
+        test_window_size: int = 1,
+        usar_tabpfn: bool = True,
+        tabpfn_api_key: str | None = None,
+    ):
         results = []
         for feature in lista_features:
             result = self.run(
@@ -222,6 +251,8 @@ class ExperimentRunner:
                 feature=feature,
                 window_size=window_size,
                 test_window_size=test_window_size,
+                usar_tabpfn=usar_tabpfn,
+                tabpfn_api_key=tabpfn_api_key,
             )
             results.append({
                 "feature": feature,
@@ -231,7 +262,7 @@ class ExperimentRunner:
         return results
         
     # imputação de dataframe
-    def imputar(self, df: pd.DataFrame, algoritmo, feature):
+    def imputar(self, df: pd.DataFrame, algoritmo, feature, tabpfn_api_key: str | None = None):
         df_copy = df.copy()
         print("Nans antes: ", df[feature].isna().sum())
         df_train = df_copy[~(df_copy[feature].isna())]
@@ -251,7 +282,7 @@ class ExperimentRunner:
                 imputer.fit(df_train.copy())
                 df_imputed = imputer.transform(df_test.copy())
             case "tabpfn":
-                imputer = tabpfn_imputer(feature=feature)
+                imputer = tabpfn_imputer(feature=feature, api_key=tabpfn_api_key)
                 imputer.fit(df_train.copy())
                 df_imputed = imputer.transform(df_test.copy())
             case "missforest":

@@ -252,6 +252,48 @@
         </div>
       </div>
 
+    
+      <div class="card" id="card7" style="padding-bottom: 25px;">
+        <h2> Uso do TABPFN</h2>
+        <label style="display:flex; align-items:center; gap:10px; margin-bottom: 15px; font-size:0.9rem;">
+          <input id="checkbox_usar_tabpfn" type="checkbox" checked>
+          Usar TabPFN
+        </label>
+        <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem; margin-bottom: 10px;">
+          API Key da Prior Labs
+          <input id="input_priorlabs_api_key" type="password" placeholder="Cole a API key aqui" style="padding:10px; border-radius:8px; border:1px solid #beb5b5;">
+        </label>
+      </div>
+         
+     <div class="texto-lateral" style="display: flex; gap: 24px; align-items: flex-start; font-size: 0.95rem; color: #4a5568;">
+         <!-- Coluna 1: Explicação inicial -->
+        <div style="flex: 1; min-width: 200px;">
+          <p style="margin: 0;">
+            A ferramenta usa a API disponibilizada pela <strong>PriorLabs</strong> para uso do TabPFN. Se deseja utilizá-lo, marque a caixa de seleção ao lado e cole a chave da API.
+          </p>
+        </div>
+      
+        <!-- Coluna 2: Como obter sua chave (Meio) -->
+        <div style="flex: 1.2; min-width: 220px;">
+          <p style="margin-top: 0; margin-bottom: 8px; font-weight: 600; color: #2d3748;">
+            Como obter sua chave:
+          </p>
+          <ol style="margin: 0; padding-left: 18px;">
+            <li>Acesse <a href="https://ux.priorlabs.ai" target="_blank" style="color: #667eea;">ux.priorlabs.ai</a></li>
+            <li>Faça login ou registre-se</li>
+            <li>Aceite a licença na aba <strong>Licenses</strong></li>
+            <li>Crie e copie sua API Key em <a href="https://ux.priorlabs.ai/api/keys" target="_blank" style="color: #667eea;">ux.priorlabs.ai/api/keys</a></li>
+          </ol>
+        </div>
+        <!-- Coluna 3: Aviso de atenção (Direita) -->
+        <div style="flex: 1; min-width: 400px; background-color: #fff5f5; border-left: 3px solid #e53e3e; padding: 12px; border-radius: 6px;">
+          <p style="margin: 0; font-size: 0.85rem; color: #c53030; line-height: 1.4;">
+            ⚠️ <em>O TabPFN é um modelo baseado em Transformers e pode demandar um tempo considerável para execução.</em>
+          </p>
+        </div>
+      </div>
+
+      
       <div class="card" id="card4">
         <h2>📐 Seleção para Quadrantes</h2>
         <p style="margin-bottom: 10px; font-size: 0.9rem;">Configurações de treinamento/teste e escolha das features:</p>
@@ -442,6 +484,8 @@
       const n_Splits = Number(document.getElementById('input_n_splits').value)
       const windowSize = Number(document.getElementById('input_window_size').value);
       const testWindowSize = Number(document.getElementById('input_test_window_size').value);
+      const usarTabpfn = document.getElementById('checkbox_usar_tabpfn').checked;
+      const priorlabsApiKey = document.getElementById('input_priorlabs_api_key').value.trim();
       if (!Number.isInteger(n_Splits) || n_Splits < 1) {
         return alert("Informe um numero de split válido (>= 1).");
       }
@@ -452,8 +496,6 @@
         return alert("Informe um test window size válido (>= 1).");
       }
       
-      showNotification('O TabPFN agora usa a API remota da Prior Labs. Configure a sua API key para usar esse método na `Seleção de Quadrantes` e como opção de imputação na seção `Imputação de Dados`.', 'info', 15000);
-
       const btn = this;
       btn.disabled = true;
       btn.innerHTML = 'Gerando... <span class="loading"></span>';
@@ -465,6 +507,8 @@
       params.append('n_splits', String(n_Splits));
       params.append('window_size', String(windowSize));
       params.append('test_window_size', String(testWindowSize));
+      params.append('usar_tabpfn', String(usarTabpfn));
+      if (priorlabsApiKey) params.append('priorlabs_api_key', priorlabsApiKey);
 
       try {
         const res = await fetch(`http://localhost:8000/info_quadrantes?${params.toString()}`, { method: 'POST', body: formData });
@@ -501,8 +545,11 @@
       const imputar = Array.from(document.querySelectorAll('#checkbox_imputar input:checked')).map(i => i.value);
       const ignorar = Array.from(document.querySelectorAll('#checkbox_ignorar input:checked')).map(i => i.value);
       const metodo = document.getElementById('meuSelect').value;
+      const usarTabpfn = document.getElementById('checkbox_usar_tabpfn').checked;
+      const priorlabsApiKey = document.getElementById('input_priorlabs_api_key').value.trim();
 
       if (imputar.length === 0) return alert("Selecione features para imputar.");
+      if (metodo === 'tabpfn' && !usarTabpfn) return alert("Ative o TabPFN para usar esse método nesta execução.");
 
       const btn = this;
       btn.disabled = true;
@@ -513,6 +560,8 @@
       formData.append('metodo', metodo);
       formData.append('features_a_imputar', imputar.join(','));
       if (ignorar.length > 0) formData.append('ignorar', ignorar.join(','));
+      formData.append('usar_tabpfn', String(usarTabpfn));
+      if (priorlabsApiKey) formData.append('priorlabs_api_key', priorlabsApiKey);
 
       try {
         const res = await fetch('http://localhost:8000/imputar', { method: 'POST', body: formData });

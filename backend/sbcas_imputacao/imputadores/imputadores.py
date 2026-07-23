@@ -5,19 +5,22 @@ from sklearn.impute import KNNImputer, IterativeImputer
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.linear_model import BayesianRidge
 from tabpfn_client import TabPFNRegressor, set_access_token
+from dotenv import load_dotenv
 
 
+load_dotenv(override=True)
 _TABPFN_AUTHENTICATED_TOKEN: str | None = None
 
 
-def _get_tabpfn_api_key() -> str | None:
-    return os.getenv("PRIORLABS_API_KEY") or os.getenv("TABPFN_TOKEN")
+def _get_tabpfn_api_key(explicit_api_key: str | None = None) -> str | None:
+    #print(f"explicit key is {explicit_api_key}, api_key is {os.getenv("PRIORLABS_API_KEY")} e tabpfn é {os.getenv("TABPFN_TOKEN")}")
+    return explicit_api_key or os.getenv("PRIORLABS_API_KEY") or os.getenv("TABPFN_TOKEN")
 
 
-def _configure_tabpfn_client() -> None:
+def _configure_tabpfn_client(explicit_api_key: str | None = None) -> None:
     global _TABPFN_AUTHENTICATED_TOKEN
 
-    api_key = _get_tabpfn_api_key()
+    api_key = _get_tabpfn_api_key(explicit_api_key)
     if not api_key:
         raise RuntimeError(
             "Defina PRIORLABS_API_KEY (ou TABPFN_TOKEN) no ambiente para usar o TabPFN remoto."
@@ -37,6 +40,7 @@ class missforest:
                                max_iter=20, random_state=7)
         self.feature = feature
         self.columns_ = None
+        #print(_TABPFN_AUTHENTICATED_TOKEN)
     
     def fit(self, df_train):
         self.columns_ = [column for column in df_train.columns if not df_train[column].isna().all()]
@@ -97,8 +101,8 @@ class Zero:
         return pd.DataFrame(df_imputed, columns=df_test.columns, index=df_test.index)
     
 class tabpfn_imputer:
-    def __init__(self, feature):
-        _configure_tabpfn_client()
+    def __init__(self, feature, api_key: str | None = None):
+        _configure_tabpfn_client(api_key)
         self._model = TabPFNRegressor(ignore_pretraining_limits=True)
         self.feature = feature
         self.x_columns_ = None
