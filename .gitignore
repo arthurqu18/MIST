@@ -8,3 +8,4 @@ __pycache__/
 data
 backend/test_experiment_runner.py
 .venv
+.env.example
