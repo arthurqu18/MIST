@@ -9,3 +9,4 @@ data
 backend/test_experiment_runner.py
 .venv
 .env.example
+.DS_Store
