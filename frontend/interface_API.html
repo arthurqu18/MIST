@@ -513,6 +513,12 @@
       try {
         const res = await fetch(`http://localhost:8000/info_quadrantes?${params.toString()}`, { method: 'POST', body: formData });
         const data = await res.json();
+
+        if (!res.ok) {
+          // O FastAPI por padrão lança respostas de erro na chave { "detail": "mensagem..." }
+          const mensagemErro = data.detail || "Erro inesperado ao processar os dados.";
+          throw new Error(mensagemErro);
+        }
         
         let html = '';
         data.forEach(item => {
@@ -533,7 +539,8 @@
         });
         document.getElementById('resultado_quadrantes').innerHTML = html;
       } catch (err) {
-        alert("Erro ao gerar quadrantes.");
+        // Exibe a mensagem capturada da API ou um erro de rede genérico
+        alert(err.message || "Erro de conexão ao gerar quadrantes.");
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Gerar Quadrantes';
@@ -565,7 +572,17 @@
 
       try {
         const res = await fetch('http://localhost:8000/imputar', { method: 'POST', body: formData });
+
+        if (!res.ok) {
+          // O FastAPI por padrão lança respostas de erro na chave { "detail": "mensagem..." }
+          const dataError = await res.json().catch(() => ({}));
+          const mensagemErro = dataError.detail || "Erro inesperado ao processar os dados.";
+          throw new Error(mensagemErro);
+        }
+
         const blob = await res.blob();
+
+
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
@@ -575,11 +592,16 @@
         const fallbackExtension = uploadedFile.name.includes('.') ? uploadedFile.name.split('.').pop() : 'csv';
         a.download = serverFilename || `${uploadedFile.name.replace(/\.[^.]+$/, '')}_imputado_${metodo}.${fallbackExtension}`;
         a.click();
+
+        // Dica: Libere a URL criada da memória após o download
+        window.URL.revokeObjectURL(url);
+
       } catch (err) {
-        alert("Erro na imputação.");
+        // Exibe a mensagem capturada da API ou um erro de rede genérico
+        alert(err.message || "Erro de conexão ao gerar imputação.");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = 'Aplicar Imputação e Baixar';
+        btn.innerHTML = 'Aplicar imputação e baixar.';
       }
     });
   </script>

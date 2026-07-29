@@ -22,6 +22,18 @@ app.add_middleware(
 )
 
 
+def _is_tabpfn_auth_error(exc: RuntimeError) -> bool:
+    message = str(exc).lower()
+    return "invalid token" in message or "401" in message
+
+
+def _raise_tabpfn_auth_error(exc: RuntimeError) -> None:
+    raise HTTPException(
+        status_code=400,
+        detail="A API key da Prior Labs é inválida para o TabPFN ou está desatualizada.",
+    ) from exc
+
+
 @app.post("/describe")
 async def describe_df(file: UploadFile = File(...)):
 
@@ -89,14 +101,20 @@ async def info_quad(
         )
     
     runner = ExperimentRunner(n_splits=n_split)
-    results = runner.runners(
-        df=df,
-        lista_features=lista_features,
-        window_size=window_size,
-        test_window_size=test_window_size,
-        usar_tabpfn=usar_tabpfn,
-        tabpfn_api_key=priorlabs_api_key,
-    )
+
+    try:
+        results = runner.runners(
+            df=df,
+            lista_features=lista_features,
+            window_size=window_size,
+            test_window_size=test_window_size,
+            usar_tabpfn=usar_tabpfn,
+            tabpfn_api_key=priorlabs_api_key,
+        )
+    except RuntimeError as exc:
+        if usar_tabpfn and _is_tabpfn_auth_error(exc):
+            _raise_tabpfn_auth_error(exc)
+        raise
 
     payload = []
     for item in results:
@@ -164,12 +182,17 @@ async def imputar_dados(
                     detail="TabPFN ativado mas sem a API key",
                 )
             
-            df_imputed = runner.imputar(
-                df=df_imputed,
-                algoritmo=metodo,
-                feature=col,
-                tabpfn_api_key=priorlabs_api_key,
-            )
+            try:
+                df_imputed = runner.imputar(
+                    df=df_imputed,
+                    algoritmo=metodo,
+                    feature=col,
+                    tabpfn_api_key=priorlabs_api_key,
+                )
+            except RuntimeError as exc:
+                if usar_tabpfn and metodo == "tabpfn" and _is_tabpfn_auth_error(exc):
+                    _raise_tabpfn_auth_error(exc)
+                raise
 
     for col, valores in colunas_ignoradas.items():
         df_imputed[col] = valores
