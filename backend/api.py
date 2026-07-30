@@ -176,7 +176,7 @@ async def imputar_dados(
                     detail="TabPFN foi desativado para esta execução. Ative a opção para usá-lo ou escolha outro método.",
                 )
             
-            if usar_tabpfn and not priorlabs_api_key:
+            if metodo == "tabpfn" and usar_tabpfn and not priorlabs_api_key:
                 raise HTTPException(
                     status_code=400,
                     detail="TabPFN ativado mas sem a API key",

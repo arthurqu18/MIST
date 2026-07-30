@@ -557,6 +557,11 @@
 
       if (imputar.length === 0) return alert("Selecione features para imputar.");
       if (metodo === 'tabpfn' && !usarTabpfn) return alert("Ative o TabPFN para usar esse método nesta execução.");
+      
+      const termo_conflito = imputar.some(num => ignorar.includes(num));
+      if (termo_conflito) {
+        return alert ("Não escolha a mesma feature para ser imputada e ignorada!");
+      }
 
       const btn = this;
       btn.disabled = true;
