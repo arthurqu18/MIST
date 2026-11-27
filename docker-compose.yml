@@ -6,8 +6,6 @@ services:
     container_name: backend
     ports:
       - "8000:8000"
-    env_file:
-      - .env
     environment:
       - PRIORLABS_API_KEY=${PRIORLABS_API_KEY:-}
       - TABPFN_TOKEN=${TABPFN_TOKEN:-}
