@@ -275,7 +275,7 @@
         <div class="upload-area" id="uploadArea">
           <input type="file" id="input_file" accept=".csv,.xlsx,.xls,.parquet" hidden>
           <div class="upload-content">
-            <p>Clique ou arraste seu arquivo aqui (.csv ou .parquet)</p>
+            <p>Clique ou arraste seu arquivo aqui (.csv, .parquet, .xlsx ou .xls)</p>
             <span id="fileName" style="font-weight:bold; color:#667eea;"></span>
           </div>
         </div>
@@ -460,17 +460,19 @@
         // Busca estatísticas
         const resDesc = await fetch('http://localhost:8000/describe', { method: 'POST', body: formData });
         const dataDesc = await resDesc.json();
+        if (!resDesc.ok) throw new Error(dataDesc.detail || "Erro ao ler o arquivo.");   // <-- ADICIONAR
 
         // Busca NaNs
         const resNans = await fetch('http://localhost:8000/colunas_nans', { method: 'POST', body: formData });
         const dataNans = await resNans.json();
+        if (!resNans.ok) throw new Error(dataNans.detail || "Erro ao contar NaNs.");     // <-- ADICIONAR
 
         renderizarTabelaMestra(dataDesc, dataNans);
         popularCheckboxes(Object.keys(dataDesc.describe));
 
       } catch (err) {
         console.error(err);
-        alert("Erro ao conectar com o servidor.");
+        alert(err.message || "Erro ao conectar com o servidor.");   // <-- ERA: alert("Erro ao conectar com o servidor.");
       } finally {
         btn.disabled = false;
         btn.innerHTML = 'Enviar Arquivo';
@@ -593,7 +595,10 @@
         const res = await fetch(`http://localhost:8000/info_quadrantes?${params.toString()}`, { method: 'POST', body: formData });
         const data = await res.json();
 
+        
+        
         if (!res.ok) {
+          
           // O FastAPI por padrão lança respostas de erro na chave { "detail": "mensagem..." }
           const mensagemErro = data.detail || "Erro inesperado ao processar os dados.";
           throw new Error(mensagemErro);

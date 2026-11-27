@@ -33,6 +33,19 @@ def _raise_tabpfn_auth_error(exc: RuntimeError) -> None:
         detail="A API key da Prior Labs é inválida para o TabPFN ou está desatualizada.",
     ) from exc
 
+def _read_dataframe(filename: str | None, source) -> pd.DataFrame:
+    ext = os.path.splitext((filename or "").lower())[1]
+    if ext == ".parquet":
+        return pd.read_parquet(source)
+    if ext == ".csv":
+        return pd.read_csv(source)
+    if ext in (".xlsx", ".xls"):
+        return pd.read_excel(source)
+    raise HTTPException(
+        status_code=400,
+        detail="Formato de arquivo não suportado. Envie .csv, .parquet, .xlsx ou .xls.",
+    )
+
 
 @app.post("/describe")
 async def describe_df(file: UploadFile = File(...)):
@@ -41,10 +54,7 @@ async def describe_df(file: UploadFile = File(...)):
     Shape e describe do dataframe passado
     """
 
-    if file.filename.endswith('.parquet'):
-        df = pd.read_parquet(file.file)
-    else:
-        df = pd.read_csv(file.file)
+    df = _read_dataframe(file.filename, io.BytesIO(await file.read()))
 
     runner = ExperimentRunner()
     result = runner.describe(df)
@@ -61,10 +71,7 @@ async def colunas_nans(file: UploadFile = File(...)):
     Nome das colunas e NaNs em cada uma
     """
 
-    if file.filename.endswith('.parquet'):
-        df = pd.read_parquet(file.file)
-    else:
-        df = pd.read_csv(file.file)
+    df = _read_dataframe(file.filename, io.BytesIO(await file.read()))
 
     runner = ExperimentRunner()
     result = runner.NaNs_each_column(df=df)
@@ -90,10 +97,7 @@ async def info_quad(
     priorlabs_api_key: str | None = Query(None),
 ):
     
-    if file.filename.endswith('.parquet'):
-        df = pd.read_parquet(file.file)
-    else:
-        df = pd.read_csv(file.file)
+    df = _read_dataframe(file.filename, io.BytesIO(await file.read()))
 
     if n_splits < window_size + test_window_size:
             raise HTTPException(
@@ -169,10 +173,7 @@ async def imputar_dados(
     with open(caminho_entrada, "wb") as f:
         f.write(await arquivo.read())
         
-    if caminho_entrada.endswith('.parquet'):
-        df = pd.read_parquet(caminho_entrada)
-    else:
-        df = pd.read_csv(caminho_entrada)
+    df = _read_dataframe(caminho_entrada, caminho_entrada)
 
     colunas_originais = df.columns.tolist()
 
@@ -223,10 +224,17 @@ async def imputar_dados(
         
     df_imputed = df_imputed[colunas_originais]
 
-    caminho_saida = f"imputado_{arquivo.filename}"
-    if caminho_saida.endswith('.parquet'):
+    base_saida, ext_saida = os.path.splitext(arquivo.filename)
+    ext_lower = ext_saida.lower()
+
+    if ext_lower == ".parquet":
+        caminho_saida = f"imputado_{arquivo.filename}"
         df_imputed.to_parquet(caminho_saida, index=False)
+    elif ext_lower in (".xlsx", ".xls"):
+        caminho_saida = f"imputado_{base_saida}.xlsx"
+        df_imputed.to_excel(caminho_saida, index=False)
     else:
+        caminho_saida = f"imputado_{arquivo.filename}"
         df_imputed.to_csv(caminho_saida, index=False)
         
     os.remove(caminho_entrada)
