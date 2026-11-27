@@ -60,7 +60,7 @@
       gap: 25px;
     }
 
-    #card1, #card2, #card6 { grid-column: 1 / -1; }
+    #card1, #card2, #card6, #card7 { grid-column: 1 / -1; }
     #card4 { grid-column: 1 / 2; }
     #card5 { grid-column: 2 / 3; }
 
@@ -214,10 +214,46 @@
     .toast.success { background: #48bb78; }
     .toast.info { background: #667eea; }
 
+    /* Layout interno do card do TabPFN */
+    .tabpfn-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.3fr;
+      gap: 24px;
+      align-items: start;
+    }
+
+    .tabpfn-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .tabpfn-guide {
+      background: #f8f9ff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 16px 20px;
+      font-size: 0.9rem;
+      color: #4a5568;
+      line-height: 1.6;
+    }
+
+    .tabpfn-warning {
+      margin-top: 16px;
+      background-color: #fff5f5;
+      border-left: 4px solid #e53e3e;
+      padding: 12px 16px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #c53030;
+      line-height: 1.4;
+    }
+
     /* Responsividade */
     @media (max-width: 1024px) {
       .container { grid-template-columns: 1fr; }
       #card4, #card5 { grid-column: 1 / -1; }
+      .tabpfn-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -253,43 +289,40 @@
       </div>
 
     
-      <div class="card" id="card7" style="padding-bottom: 25px;">
-        <h2> Uso do TABPFN</h2>
-        <label style="display:flex; align-items:center; gap:10px; margin-bottom: 15px; font-size:0.9rem;">
-          <input id="checkbox_usar_tabpfn" type="checkbox" checked>
-          Usar TabPFN
-        </label>
-        <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem; margin-bottom: 10px;">
-          API Key da Prior Labs
-          <input id="input_priorlabs_api_key" type="password" placeholder="Cole a API key aqui" style="padding:10px; border-radius:8px; border:1px solid #beb5b5;">
-        </label>
-      </div>
-         
-     <div class="texto-lateral" style="display: flex; gap: 24px; align-items: flex-start; font-size: 0.95rem; color: #4a5568;">
-         <!-- Coluna 1: Explicação inicial -->
-        <div style="flex: 1; min-width: 200px;">
-          <p style="margin: 0;">
-            A ferramenta usa a API disponibilizada pela <strong>PriorLabs</strong> para uso do TabPFN. Se deseja utilizá-lo, marque a caixa de seleção ao lado e cole a chave da API.
-          </p>
+      <div class="card" id="card7">
+        <h2>⚙️ Uso do TabPFN</h2>
+        <div class="tabpfn-grid">
+          <!-- Coluna esquerda: controles -->
+          <div class="tabpfn-controls">
+            <p style="font-size: 0.9rem; color: #4a5568; line-height: 1.5;">
+              A ferramenta utiliza a API da <strong>Prior Labs</strong> para executar o TabPFN. Se deseja utilizá-lo, mantenha a opção marcada e cole sua chave abaixo.
+            </p>
+            <label style="display:flex; align-items:center; gap:10px; font-size:0.95rem; font-weight:500; cursor:pointer;">
+              <input id="checkbox_usar_tabpfn" type="checkbox" checked>
+              Usar TabPFN
+            </label>
+            <label style="display:flex; flex-direction:column; gap:6px; font-size:0.9rem;">
+              API Key da Prior Labs
+              <input id="input_priorlabs_api_key" type="password" placeholder="Cole a API key aqui" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+            </label>
+          </div>
+
+          <!-- Coluna direita: instruções -->
+          <div class="tabpfn-guide">
+            <p style="margin-bottom: 8px; font-weight: 600; color: #2d3748;">
+              Como obter sua chave:
+            </p>
+            <ol style="margin: 0; padding-left: 20px;">
+              <li>Acesse <a href="https://ux.priorlabs.ai" target="_blank" style="color: #667eea;">ux.priorlabs.ai</a></li>
+              <li>Faça login ou registre-se</li>
+              <li>Aceite a licença na aba <strong>Licenses</strong></li>
+              <li>Crie e copie sua API Key em <a href="https://ux.priorlabs.ai/api/keys" target="_blank" style="color: #667eea;">ux.priorlabs.ai/api/keys</a></li>
+            </ol>
+          </div>
         </div>
-      
-        <!-- Coluna 2: Como obter sua chave (Meio) -->
-        <div style="flex: 1.2; min-width: 220px;">
-          <p style="margin-top: 0; margin-bottom: 8px; font-weight: 600; color: #2d3748;">
-            Como obter sua chave:
-          </p>
-          <ol style="margin: 0; padding-left: 18px;">
-            <li>Acesse <a href="https://ux.priorlabs.ai" target="_blank" style="color: #667eea;">ux.priorlabs.ai</a></li>
-            <li>Faça login ou registre-se</li>
-            <li>Aceite a licença na aba <strong>Licenses</strong></li>
-            <li>Crie e copie sua API Key em <a href="https://ux.priorlabs.ai/api/keys" target="_blank" style="color: #667eea;">ux.priorlabs.ai/api/keys</a></li>
-          </ol>
-        </div>
-        <!-- Coluna 3: Aviso de atenção (Direita) -->
-        <div style="flex: 1; min-width: 400px; background-color: #fff5f5; border-left: 3px solid #e53e3e; padding: 12px; border-radius: 6px;">
-          <p style="margin: 0; font-size: 0.85rem; color: #c53030; line-height: 1.4;">
-            ⚠️ <em>O TabPFN é um modelo baseado em Transformers e pode demandar um tempo considerável para execução.</em>
-          </p>
+
+        <div class="tabpfn-warning">
+          ⚠️ <em>O TabPFN é um modelo baseado em Transformers e pode demandar um tempo considerável para execução.</em>
         </div>
       </div>
 
@@ -315,6 +348,35 @@
         <div id="checkbox_quadrantes" class="checkbox-group">
           <p class="placeholder">Carregue um arquivo primeiro.</p>
         </div>
+
+        <p style="margin: 15px 0 10px; font-size: 0.9rem;">Algoritmos para avaliação:</p>
+        <div id="checkbox_algoritmos_quadrantes" class="checkbox-group">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" value="média" id="alg_quad_media" checked>
+            <label for="alg_quad_media" style="font-size:0.85rem; cursor:pointer;">Média</label>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" value="zero" id="alg_quad_zero">
+            <label for="alg_quad_zero" style="font-size:0.85rem; cursor:pointer;">Zero</label>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" value="knn" id="alg_quad_knn" checked>
+            <label for="alg_quad_knn" style="font-size:0.85rem; cursor:pointer;">KNN</label>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" value="mice" id="alg_quad_mice" checked>
+            <label for="alg_quad_mice" style="font-size:0.85rem; cursor:pointer;">MICE</label>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" value="missforest" id="alg_quad_missforest" checked>
+            <label for="alg_quad_missforest" style="font-size:0.85rem; cursor:pointer;">MissForest</label>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <input type="checkbox" value="tabpfn" id="alg_quad_tabpfn" checked>
+            <label for="alg_quad_tabpfn" style="font-size:0.85rem; cursor:pointer;">TabPFN</label>
+          </div>
+        </div>
+
         <button id="btn_selecao_quadrantes" style="margin-top: 15px; width: 100%;">Gerar Quadrantes</button>
       </div>
 
@@ -481,6 +543,8 @@
       const selected = Array.from(document.querySelectorAll('#checkbox_quadrantes input:checked')).map(i => i.value);
       if (selected.length === 0) return alert("Selecione ao menos uma feature.");
 
+      const selectedAlgs = Array.from(document.querySelectorAll('#checkbox_algoritmos_quadrantes input:checked')).map(i => i.value);
+      if (selectedAlgs.length === 0) return alert("Selecione ao menos um algoritmo.");
       const n_Splits = Number(document.getElementById('input_n_splits').value)
       const windowSize = Number(document.getElementById('input_window_size').value);
       const testWindowSize = Number(document.getElementById('input_test_window_size').value);
@@ -496,6 +560,18 @@
         return alert("Informe um test window size válido (>= 1).");
       }
       
+      if (n_Splits < windowSize + testWindowSize) {
+        return alert("A quantidade de folds deve ser maior ou igual à soma de Train window size e Test window size.");
+      }
+
+      if (selectedAlgs.includes('tabpfn') && !usarTabpfn) {
+        return alert("Ative 'Usar TabPFN' na configuração acima ou desmarque o TabPFN nos algoritmos.");
+      }
+
+      if (selectedAlgs.includes('tabpfn') && !priorlabsApiKey) {
+        return alert("Não é possível rodar o TabPFN sem a chave API. Favor desmarcar o TabPFN ou inserir a API Key.");
+      }
+
       const btn = this;
       btn.disabled = true;
       btn.innerHTML = 'Gerando... <span class="loading"></span>';
@@ -504,6 +580,7 @@
       formData.append('file', uploadedFile);
       const params = new URLSearchParams();
       selected.forEach(s => params.append('lista_features', s));
+      selectedAlgs.forEach(alg => params.append('lista_algoritmos', alg));
       params.append('n_splits', String(n_Splits));
       params.append('window_size', String(windowSize));
       params.append('test_window_size', String(testWindowSize));
@@ -558,6 +635,10 @@
       if (imputar.length === 0) return alert("Selecione features para imputar.");
       if (metodo === 'tabpfn' && !usarTabpfn) return alert("Ative o TabPFN para usar esse método nesta execução.");
       
+      if (metodo === 'tabpfn' && !priorlabsApiKey) {
+        return alert("Não é possível rodar o TabPFN sem a chave API. Favor desmarcar o TabPFN ou inserir a API Key.");
+      }
+
       const termo_conflito = imputar.some(num => ignorar.includes(num));
       if (termo_conflito) {
         return alert ("Não escolha a mesma feature para ser imputada e ignorada!");

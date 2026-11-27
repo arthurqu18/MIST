@@ -45,6 +45,7 @@ class ExperimentRunner:
         test_window_size: int = 1,
         usar_tabpfn: bool = True,
         tabpfn_api_key: str | None = None,
+        lista_algoritmos: list[str] | None = None,
     ):      
         if feature not in df.columns:
             raise ValueError(f"Feature '{feature}' não encontrada no dataframe passado")
@@ -67,9 +68,27 @@ class ExperimentRunner:
         df_controle = df.loc[idx_missing]
 
         
-        imputadores = {'média': Mean,'knn': KNN,'mice': MICE, 'missforest': missforest}
-        if usar_tabpfn:
-            imputadores['tabpfn'] = tabpfn_imputer
+        catalogo_imputadores = {
+            'média': Mean,
+            'zero': Zero,
+            'knn': KNN,
+            'mice': MICE,
+            'missforest': missforest,
+            'tabpfn': tabpfn_imputer,
+        }
+
+        if lista_algoritmos is not None:
+            invalidos = [alg for alg in lista_algoritmos if alg not in catalogo_imputadores]
+            if invalidos:
+                raise ValueError(f"Algoritmos inválidos: {', '.join(invalidos)}")
+            imputadores = {alg: catalogo_imputadores[alg] for alg in lista_algoritmos}
+        else:
+            imputadores = {'média': Mean, 'knn': KNN, 'mice': MICE, 'missforest': missforest}
+            if usar_tabpfn:
+                imputadores['tabpfn'] = tabpfn_imputer
+
+        if not imputadores:
+            raise ValueError("Selecione ao menos um algoritmo para avaliação.")
         dfs = {nome: [] for nome in imputadores.keys()}
         metricas = []
 
@@ -97,7 +116,7 @@ class ExperimentRunner:
             for nome, func in imputadores.items():
                 start_time = time.time()
 
-                if(nome != "média"):
+                if nome not in ("média", "zero"):
                     if nome == "tabpfn":
                         imputer = func(feature=self.feature, api_key=tabpfn_api_key)
                     else:
@@ -185,8 +204,7 @@ class ExperimentRunner:
         results_final["quadrante"] = np.where(results_final["Distancia Media"] >= media_x, "Direita", "Esquerda")
         results_final["quadrante"] += np.where(results_final["Entropia"] >= media_y, " Superior", " Inferior")
 
-        lista_erros = ["Erro Absoluto média", "Erro Absoluto knn","Erro Absoluto mice","Erro Absoluto missforest"]
-        if usar_tabpfn: lista_erros.append("Erro Absoluto tabpfn")
+        lista_erros = [f"Erro Absoluto {metodo}" for metodo in imputadores.keys()]
 
         erro_medio = results_final.groupby("quadrante")[lista_erros].mean()
         erro_medio = erro_medio.round(2)
@@ -205,29 +223,7 @@ class ExperimentRunner:
         )
         ax.set_title(f"Distribuição para a feature {feature}")
         ax.axvline(media_x, color="red", linestyle="--", linewidth=1.5, label=f"X = {media_x:.2f}")
-        ax.axhline(media_y, color="blue", linestyle="--", linewidth=1.5, label=f"Y = {media_y:.2f}")
-
-        quadrantes = ["Esquerda Inferior", "Esquerda Superior", "Direita Inferior", "Direita Superior"]
-        metrics_text = f"Erro por Quadrante:\n"
-
-        for quad in quadrantes:
-            metrics_text += f"• {quad}: {erro_medio['Erro Absoluto knn'].get(quad, 0):.2f}\n"
-        
-        ax.text(
-            1.05, 0.95,               
-            metrics_text.strip(), 
-            transform=ax.transAxes,   
-            fontsize=11, 
-            verticalalignment='top',  
-            fontfamily='monospace',   
-            bbox=dict(                
-            boxstyle="round,pad=0.5", 
-            facecolor="#f9f9f9", 
-            edgecolor="gray", 
-            alpha=0.9
-            )
-        )        
-                
+        ax.axhline(media_y, color="blue", linestyle="--", linewidth=1.5, label=f"Y = {media_y:.2f}")       
 
         return {
             "erro_medio": erro_medio,
@@ -243,6 +239,7 @@ class ExperimentRunner:
         test_window_size: int = 1,
         usar_tabpfn: bool = True,
         tabpfn_api_key: str | None = None,
+        lista_algoritmos: list[str] | None = None,
     ):
         results = []
         for feature in lista_features:
@@ -253,6 +250,7 @@ class ExperimentRunner:
                 test_window_size=test_window_size,
                 usar_tabpfn=usar_tabpfn,
                 tabpfn_api_key=tabpfn_api_key,
+                lista_algoritmos=lista_algoritmos,
             )
             results.append({
                 "feature": feature,
